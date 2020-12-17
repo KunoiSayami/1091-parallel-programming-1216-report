@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <omp.h>
 
 using std::string;
 using std::ifstream;
@@ -35,14 +36,13 @@ mpz_class power(mpz_class x, mpz_class y, const mpz_class & p)
 // probably prime.
 // d is an odd number such that  d*2<sup>r</sup> = n-1
 // for some r >= 1
-bool millerTest(mpz_class d, const mpz_class & n, gmp_randclass & randclass)
+bool millerTest(mpz_class d, const mpz_class & n, const mpz_class & rand_num, const bool & is_prime)
 {
 	// Pick a random number in [2..n-2]
 	// Corner cases make sure that n > 4
-	mpz_class a = 2 + randclass.get_z_range(n - 4);
 
 	// Compute a^d % n
-	mpz_class x = power(a, d, n);
+	mpz_class x = power(rand_num, d, n);
 
 	if (x == 1  || x == n-1)
 		return true;
@@ -56,7 +56,8 @@ bool millerTest(mpz_class d, const mpz_class & n, gmp_randclass & randclass)
 	{
 		x = (x * x) % n;
 		d *= 2;
-
+		if (!is_prime)
+			return false;
 		if (x == 1)      return false;
 		if (x == n-1)    return true;
 	}
@@ -74,6 +75,8 @@ bool isPrime(mpz_class & n, int k, gmp_randclass & randclass)
 	if (n <= 1 || n == 4)  return false;
 	if (n <= 3) return true;
 
+	bool is_prime = true;
+
 	// Find r such that n = 2^d * r + 1 for some r >= 1
 	mpz_class d = n - 1;
 	while (d % 2 == 0)
@@ -81,11 +84,16 @@ bool isPrime(mpz_class & n, int k, gmp_randclass & randclass)
 
 
 	// Iterate given number of 'k' times
-	for (int i = 0; i < k; i++)
-		if (!millerTest(d, n, randclass))
-			return false;
+#pragma omp parallel for default(none), shared(k, d, n, randclass, is_prime)
+	for (int i = 0; i < k; i++) {
+		if (!is_prime)
+			continue;
+		if (!millerTest(d, n, 2 + randclass.get_z_range(n - 4), is_prime)) {
+			is_prime = false;
+		}
+	}
 
-	return true;
+	return is_prime;
 }
 
 // Driver program
