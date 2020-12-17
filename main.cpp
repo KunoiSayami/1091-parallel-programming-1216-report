@@ -20,7 +20,7 @@
 #include <string>
 #include <cstdio>
 #include <iostream>
-#include <gmp.h>
+#include <gmpxx.h>
 
 using std::string;
 using std::cin;
@@ -29,44 +29,30 @@ using std::getline;
 using std::endl;
 
 
-bool check_mod_is_0(mpz_t & tmp, mpz_t & opt, mpz_t & r_opt) {
-	mpz_mod(tmp, opt, r_opt);
-	return !mpz_cmp_si(tmp, 0);
-}
-
-bool is_composite(mpz_t & num) {
-	mpz_t sr, i, tmp;
+bool is_composite(mpz_class & num) {
+	mpz_class sr("0"), i("2"), tmp("0");
 	bool composite = false;
-	mpz_inits(sr, tmp, nullptr);
 
-	mpz_sqrt(sr, num);
+	sr = sqrt(num);
 
-	mpz_init_set_str(i, "2", 10);
-	if (check_mod_is_0(tmp, num, i) ||
-		check_mod_is_0(tmp, num, sr))
+	if (num % 2 == 0 || num % sr == 0)
 		composite = true;
 	else {
-		mpz_add_ui(i, i, 1);
-		mpz_add_ui(sr, sr, 1);
+		i += 1;
+		sr += 1;
 	}
 
-	for (;!composite && mpz_cmp(sr, i) >= 0; mpz_add_ui(i, i, 2)) {
-		mpz_mod(tmp, num, i);
-		//gmp_printf("%Zd\n", i);
-		if (mpz_cmp_si(tmp, 0) == 0)
+	for (;!composite && sr >= i ; i+=2) {
+		if (num % i == 0)
 			composite = true;
 	}
-
-	mpz_clears(sr, i, tmp, nullptr);
 	return composite;
 }
 
 
-
 int main() {
 	freopen("../data.in", "r", stdin);
-	//sqrt();
-	mpz_t a;
+	mpz_class a = mpz_class(0);
 	string str;
 	int n;
 	cin >> n;
@@ -74,14 +60,8 @@ int main() {
 		continue;
 	for (int i = 0; i < n; i++) {
 		getline(cin, str);
-		mpz_init_set_str(a, str.c_str(), 10);
+		a.set_str(str.c_str(), 10);
 		cout << "num: " << str.length() << endl;
-		//mpz_init_set_str(b, "0", 10);
-		//mpz_init(b);
-		//mpz_sqrt(b, a);
-		//gmp_printf("%Zd\n", a);
 		puts(is_composite(a) ? "composite" : "prime");
-		mpz_clear(a);
-		//mpz_clears(a, nullptr);
 	}
 }
