@@ -18,12 +18,12 @@
  ** along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <string>
-#include <cstdio>
 #include <iostream>
+#include <fstream>
 #include <gmpxx.h>
 
 using std::string;
-using std::cin;
+using std::ifstream;
 using std::cout;
 using std::getline;
 using std::endl;
@@ -51,10 +51,14 @@ bool is_composite(mpz_class & num) {
 
 
 int main() {
-	freopen("../data.in", "r", stdin);
-	mpz_class a = mpz_class(0);
-	string str;
+	ifstream cin("../data.in");
+	if (!cin.is_open()) {
+		std::cerr << "Can't open data.in, please run generate_data.py first.";
+		return 1;
+	}
 	int n;
+	mpz_class a(0);
+	string str;
 	cin >> n;
 	while (cin.get()!='\n')
 		continue;
@@ -64,4 +68,5 @@ int main() {
 		cout << "num: " << str.length() << endl;
 		puts(is_composite(a) ? "composite" : "prime");
 	}
+	cin.close();
 }
