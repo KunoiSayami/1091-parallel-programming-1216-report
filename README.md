@@ -1,5 +1,13 @@
 # 1091 parallel programming 1216 report
 
+## Result
+
+![](https://user-images.githubusercontent.com/46131041/102508886-dcf6ea80-40c0-11eb-8f9d-072a792234e6.png)
+
+## Special Thanks
+
+Special thanks to [@ayalhw](https://github.com/ayalhw), who helped me configure the cmake.
+
 ## License
 
 [![](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.txt)
