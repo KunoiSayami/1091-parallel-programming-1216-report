@@ -79,6 +79,8 @@ bool isPrime(mpz_class & n, int k, gmp_randclass & randclass)
 	if (n <= 1 || n == 4)  return false;
 	if (n <= 3) return true;
 
+	bool is_prime = true;
+
 	// Find r such that n = 2^d * r + 1 for some r >= 1
 	mpz_class d = n - 1;
 	while (d % 2 == 0)
@@ -86,12 +88,17 @@ bool isPrime(mpz_class & n, int k, gmp_randclass & randclass)
 
 
 	// Iterate given number of 'k' times
-	for (int i = 0; i < k; i++)
-		if (!millerTest(d, n, 2 + randclass.get_z_range(n - 4))) {
-			return false;
+#pragma omp parallel for default(none), shared(n, d, k, randclass, is_prime)
+	for (int i = 0; i < k; i++) {
+		if (!is_prime) {
+			continue;
 		}
+		if (!millerTest(d, n, 2 + randclass.get_z_range(n - 4))) {
+			is_prime = false;
+		}
+	}
 
-	return true;
+	return is_prime;
 }
 
 // Driver program
@@ -108,7 +115,7 @@ int main()
 #endif
 	string str;
 	cin >> n;
-	while (cin.get()!='\n')
+	while (cin.get()!='\n' && !cin.eof())
 		continue;
 	for (int i = 0; i < n; i++) {
 		getline(cin, str);
@@ -123,7 +130,11 @@ int main()
 		//printf("num: %lu\n", item.length());
 		a.set_str(item.c_str(), 10);
 		// RESULT: num length result \n
+#ifndef READ_FROM_FILE
 		printf("%s %lu %s\n", item.c_str(), item.length(), isPrime(a, k, r) ? "prime" : "composite");
+#else
+		printf("%lu %s\n", item.length(), isPrime(a, k, r) ? "prime" : "composite");
+#endif
 		//cout << a << item.length()
 	}
 #else

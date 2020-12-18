@@ -23,7 +23,10 @@ import random
 if __name__ == '__main__':
     n = random.randint(50, 100)
     with open('data.in', 'w') as fout:
-        fout.write(f'{n}\n')
+        fout.write(f'{n + 3}\n')
+        fout.write(f'{2**23209 - 1}\n')
+        fout.write(f'{2**21701 - 1}\n')
+        fout.write(f'{2**19937 - 1}\n')
         for _i in range(n):
             sz = [random.randint(0, 9) for _ in range(random.randint(6000, 10000))]
             sz.append(random.choice(range(1, 10, 2)))
