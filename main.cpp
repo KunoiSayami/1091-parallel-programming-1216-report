@@ -76,9 +76,9 @@ double utimeA(int idx, const char *str) {
 
 #define SORT_ORDER 0
 #define EQ ==
-constexpr size_t SZ = 50000;
+constexpr size_t default_sz = 50000;
 //WARNING: "if define this length more than 840, process will stuck" (fixed)
-constexpr size_t LNG = SZ - 1;
+constexpr size_t LNG = default_sz - 1;
 constexpr size_t STRING_SIZE = 20;
 constexpr int MAX_NUM = 10000;
 int printing = 0;
@@ -177,17 +177,20 @@ void shsort(int n, char **key, int *t, int para) {
 
 int main(int argc, char const * argv[]) {
 	bool read_from_file = false;
-	if (argc > 1 and strcmp(argv[1], "--file") == 0) {
-		freopen("data.in", "r", stdin);
-		read_from_file = true;
+	if (argc > 1) {
+		for (int i = 1; i < argc; i++)
+			if (!strcmp(argv[i], "--file")) {
+				freopen("data.in", "r", stdin);
+				read_from_file = true;
+			}
 	}
-	char **ar, tmp[SZ];
-	int t[SZ];
+	char **ar, tmp[default_sz];
+	int t[default_sz];
 	int maxNum = MAX_NUM;
 	//omp_set_nested(1);
 	/* set the content of ar array */
-	ar = new char *[SZ];
-	//ar = (char **) calloc(SZ, sizeof(char *));
+	ar = new char *[default_sz];
+	//ar = (char **) calloc(default_sz, sizeof(char *));
 	for (int i = 1; i <= LNG + 1; i++)
 		ar[i] = new char[STRING_SIZE];
 	//ar[i] = (char *) calloc(STRING_SIZE, 1);
