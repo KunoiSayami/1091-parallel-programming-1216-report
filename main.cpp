@@ -15,18 +15,12 @@ using namespace std::chrono;
 
 #define SORT_ORDER 0
 #define EQ ==
-constexpr size_t default_sz = 50000;
+constexpr size_t default_sz = 50000 + 10;
 //WARNING: "if define this length more than 840, process will stuck" (fixed)
-constexpr size_t LNG = default_sz - 1;
+//constexpr size_t LNG = default_sz - 1;
 constexpr size_t STRING_SIZE = 20;
 constexpr int MAX_NUM = 10000;
 int printing = 0;
-
-void printKey(char **key, int *t) {
-	int i;
-	printf("\n\tcontent:");
-	for (i = 1; i <= LNG; i++) printf("%s  ", key[t[i]]);
-}
 
 int changed = 0;    // the global variable
 int use_changed = 1;  // flag to decide whether go recording whether has exchanged
@@ -122,12 +116,12 @@ void showTimeSpan(const high_resolution_clock::time_point & start_time) {
 int main(int argc, char const * argv[]) {
 	using namespace std::chrono;
 	bool read_from_file = false;
+	size_t LNG = default_sz - 1;
 	if (argc > 1) {
-		for (int i = 1; i < argc; i++)
-			if (!strcmp(argv[i], "--file")) {
-				freopen("data.in", "r", stdin);
-				read_from_file = true;
-			}
+		sscanf(argv[1], "%d", &LNG);
+		if (LNG > default_sz) {
+			fprintf(stderr, "LNG > default_sz, Please check.\n");
+		}
 	}
 	char **ar, tmp[default_sz];
 	int t[default_sz];
@@ -160,36 +154,48 @@ int main(int argc, char const * argv[]) {
 			printf("%s ", ar[t[i]]);
 	}
 	high_resolution_clock::time_point start_time = high_resolution_clock::now();
-	// first sort
-	//utimeA(1, "");
+
 	shsort(LNG, ar, t, 0);
 	showTimeSpan(start_time);
-	//utimeA(1, "\nused time:");
-	printf("first sort, shell sort sequential:");
+	printf("First sort, shell sort sequential:");
 	if (printing) {
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	}
 	puts("");
+
 	// second sort
 	for (int i = 1; i <= LNG; i++)
 		t[i] = i;
 	start_time = high_resolution_clock::now();
 	shsort(LNG, ar, t, 1);
 	showTimeSpan(start_time);
-	printf("\nsecond sort, shell sort parallel:");
+	printf("Second sort, shell sort parallel:");
 	if (printing) {
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	}
 	puts("");
+
 	// third sort
+	for (int i = 1; i <= LNG; i++) t[i] = i;
+	start_time = high_resolution_clock::now();
+	trsort(LNG, ar, t, 0);
+	showTimeSpan(start_time);
+	printf("Third sort, transposition sort sequential:");
+	if (printing) {
+		for (int i = 1; i <= LNG; i++)
+			printf("%s ", ar[t[i]]);
+	}
+	puts("");
+
+	// fourth sort
 	for (int i = 1; i <= LNG; i++) t[i] = i;
 	start_time = high_resolution_clock::now();
 	trsort(LNG, ar, t, 1);
 	showTimeSpan(start_time);
-	//utimeA(1, "\nused time:");
-	printf("\nthird sort, transposition sort parallel:");
+	printf("Fourth sort, transposition sort parallel:");
+
 	if (printing)
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);

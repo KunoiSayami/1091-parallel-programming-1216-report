@@ -2,11 +2,8 @@
 
 ## Result
 
-![](https://user-images.githubusercontent.com/46131041/102508886-dcf6ea80-40c0-11eb-8f9d-072a792234e6.png)
+![](https://user-images.githubusercontent.com/46131041/103103730-1f3e9f80-465e-11eb-902e-19df1cc464e3.png)
 
-## Special Thanks
-
-Special thanks to [@ayalhw](https://github.com/ayalhw), who helped me configure the cmake.
 
 ## License
 
