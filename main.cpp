@@ -1,152 +1,246 @@
-// copied from https://www.geeksforgeeks.org/primality-test-set-3-miller-rabin/
-#include <gmpxx.h>
-#include <iostream>
-#include <fstream>
-#include <string>
+#include <cstdio>
+#include <cmath>
 #include <omp.h>
-#include <vector>
-#include "trim.h"
-
-using std::string;
-using std::ifstream;
-using std::cout;
-using std::getline;
-using std::endl;
-using std::vector;
+#include <ctime>
+#include <sys/types.h>
+#include <sys/timeb.h>
+#include <cmath>
+#include <cstring>
 
 
-vector<string> items;
-
-// Utility function to do modular exponentiation.
-// It returns (x^y) % p
-mpz_class power(mpz_class x, mpz_class y, const mpz_class & p)
+#ifdef VC2005
+/* save time, in milli second unit, into ltime */
+void times2(long *mtime)
 {
-	mpz_class res(1);      // Initialize result
-	x = x % p;  // Update x if it is more than or
-	// equal to p
-	while (y > 0)
-	{
-		// If y is odd, multiply x with result
-		if (y % 2 ==  1)
-			res = (res*x) % p;
+	__time64_t ltime;
+	struct __timeb64 tstruct;
+	_time64(&ltime);
+	_ftime64_s(&tstruct);
+	*mtime = ltime * 1000 + tstruct.millitm;
+}
+#else
 
-		// y must be even now
-		y = y>>1; // y = y/2
-		x = (x*x) % p;
-	}
-	return res;
+/* save time, in milli second unit, into ltime */
+void times2(long *mtime) {
+	time(mtime);
 }
 
-// This function is called for all k trials. It returns
-// false if n is composite and returns false if n is
-// probably prime.
-// d is an odd number such that  d*2<sup>r</sup> = n-1
-// for some r >= 1
-bool millerTest(mpz_class d, const mpz_class & n, const mpz_class & rand_num)
-{
-	// Pick a random number in [2..n-2]
-	// Corner cases make sure that n > 4
+#endif
 
-	// Compute a^d % n
-	mpz_class x = power(rand_num, d, n);
-
-	if (x == 1  || x == n-1)
-		return true;
-
-	// Keep squaring x while one of the following doesn't
-	// happen
-	// (i)   d does not reach n-1
-	// (ii)  (x^2) % n is not 1
-	// (iii) (x^2) % n is not n-1
-	while (d != n-1)
-	{
-		x = (x * x) % n;
-		d *= 2;
-		if (x == 1)      return false;
-		if (x == n-1)    return true;
+double utime() {
+	static long t1, t2;
+	static int first = 1;
+	if (first) {
+		times2(&t1);
+		first = 0;
+		return (0.0);
+	} else {
+		times2(&t2);
+		first = 1;  // reset this counter
 	}
-
-	// Return composite
-	return false;
+	return ((t2 - t1) / 1000.0);
 }
 
-// It returns false if n is composite and returns true if n
-// is probably prime.  k is an input parameter that determines
-// accuracy level. Higher value of k indicates more accuracy.
-bool isPrime(mpz_class & n, int k, gmp_randclass & randclass)
-{
-	// Corner cases
-	if (n <= 1 || n == 4)  return false;
-	if (n <= 3) return true;
 
-	bool is_prime = true;
+#define UTIME_LNG 1000
 
-	// Find r such that n = 2^d * r + 1 for some r >= 1
-	mpz_class d = n - 1;
-	while (d % 2 == 0)
-		d /= 2;
+/* A function to return the used CPU time */
+double utimeA(int idx, const char *str) {
+	static long t1[UTIME_LNG], t2[UTIME_LNG];
+	static int first[UTIME_LNG];
+	static int initial = 1;
+	double tval;
+	int i;
+	if (initial) {
+		initial = 0;
+		for (i = 0; i < UTIME_LNG; i++) first[i] = 1;
+	}
+	if (idx >= UTIME_LNG) {
+		printf("\nWrong in giving index to utimeA().\n");
+		exit(-1);
+	}
+	if (first[idx]) {
+		times2(&t1[idx]);
+		first[idx] = 0;
+		return (0.0);
+	} else {
+		times2(&t2[idx]);
+		first[idx] = 1;  // reset this counter
+	}
+	tval = (t2[idx] - t1[idx]) / 1000.0;
+	printf("%s %g second.", str, tval);
+	return (tval);
+}
 
+/*  ............... Testing programs ................. */
 
-	// Iterate given number of 'k' times
-#pragma omp parallel for default(none), shared(n, d, k, randclass, is_prime)
-	for (int i = 0; i < k; i++) {
-		if (!is_prime) {
-			continue;
+#define SORT_ORDER 0
+#define EQ ==
+constexpr size_t SZ = 50000;
+//WARNING: "if define this length more than 840, process will stuck" (fixed)
+constexpr size_t LNG = SZ - 1;
+constexpr size_t STRING_SIZE = 20;
+constexpr int MAX_NUM = 10000;
+int printing = 0;
+
+void printKey(char **key, int *t) {
+	int i;
+	printf("\n\tcontent:");
+	for (i = 1; i <= LNG; i++) printf("%s  ", key[t[i]]);
+}
+
+int changed = 0;    // the global variable
+int use_changed = 1;  // flag to decide whether go recording whether has exchanged
+void comp_exchange2(char **key, int *t, int a, int b, int len) {
+	int tmp;
+	if (b > len) return;   // b is out of original_n, so key[t[a]] is smaller
+	if (strcmp(key[t[a]], key[t[b]]) > 0) {
+		// exchange
+		tmp = t[a];
+		t[a] = t[b];
+		t[b] = tmp;
+#pragma omp atomic // record the exchange counts
+		changed++;
+	}
+}
+
+void comp_exchange(char **key, int *t, int a, int b) {
+	int tmp;
+	if (strcmp(key[t[a]], key[t[b]]) > 0) {
+		// exchange
+		tmp = t[a];
+		t[a] = t[b];
+		t[b] = tmp;
+#pragma omp atomic // record the exchange counts
+		changed++;
+	}
+}
+
+void trsort(int n, char **key, int *t, int para) {
+	int i, j;
+	int thN;
+	changed = 0;
+	for (i = 1; i <= n; i++) {
+		//printf("\niteration %d", i);
+		if (i % 2) {  // i is odd
+#pragma omp parallel for default(none) shared(n, key, t), private(j) if(para)
+			for (j = 0; j <= n / 2 - 1; j++) {
+				comp_exchange(key, t, 2 * j + 1, 2 * j + 2);
+			}
+		} else {  // i is even
+			// add following three lines to cope the problem of n is odd
+			int m;
+			if (n % 2) m = n / 2;
+			else m = n / 2 - 1;
+#pragma omp parallel for default(none) shared(m, t, key), private(j) if(para)
+			for (j = 1; j <= m; j++) {
+				comp_exchange(key, t, 2 * j, 2 * j + 1);
+			}
+			if (use_changed) {
+				if (!changed) break;
+				else changed = 0;
+			}
 		}
-		if (!millerTest(d, n, 2 + randclass.get_z_range(n - 4))) {
-			is_prime = false;
-		}
 	}
-
-	return is_prime;
 }
 
-// Driver program
-int main()
-{
-	int k = 10;  // Number of iterations
-	int n;
+void shsort(int n, char **key, int *t, int para) {
+	int R, i, j, j2, pi, offset, pi2;
+	int thN;
+	int a, original_n;
+	// length consideration
+	for (a = 0; ; a++) if (pow(2.0, (double) a) >= n) break;
+	original_n = n;
+	n = pow(2.0, (double) a);
+	R = n;
+	while (R >= 2) {
+		//#pragma omp parallel for private(i, pi, offset, pi2, j, j2) if(para) num_threads(8)
+		for (i = 0; i < n / 2; i++) {
+			pi = i % (R / 2);
+			offset = (int) (i / (R / 2)) * R;
+			pi2 = R - pi - 1;
+			j = pi + offset;
+			j2 = pi2 + offset;
+#ifdef PRINT_PROCESS
+			if (printing) printf("\ncomp %d %d ", j, j2);
+#endif
+			comp_exchange2(key, t, j + 1, j2 + 1, original_n);
+		}
+#ifdef PRINT_PROCESS
+		if (printing) printf("\n----");
+#endif
+		R /= 2;
+	}
+	trsort(original_n, key, t, para);
+}
 
-	gmp_randclass r(gmp_randinit_default);
-#ifdef READ_FROM_FILE
-	ifstream cin("../data.in");
-#else
-	using std::cin;
-#endif
-	string str;
-	cin >> n;
-	while (cin.get()!='\n' && !cin.eof())
-		continue;
-	for (int i = 0; i < n; i++) {
-		getline(cin, str);
-		items.emplace_back(trim(str));
-	}
 
-#ifndef TEST_SQRT
-#pragma omp parallel for default(none), shared(n, items, k, r)
-	for (int i = 0; i < n; i++) {
-		mpz_class a(0);
-		string & item = items[i];
-		//printf("num: %lu\n", item.length());
-		a.set_str(item.c_str(), 10);
-		// RESULT: num length result \n
-#ifndef READ_FROM_FILE
-		printf("%s %lu %s\n", item.c_str(), item.length(), isPrime(a, k, r) ? "prime" : "composite");
-#else
-		printf("%lu %s\n", item.length(), isPrime(a, k, r) ? "prime" : "composite");
-#endif
-		//cout << a << item.length()
+int main(int argc, char const * argv[]) {
+	bool read_from_file = false;
+	if (argc > 1 and strcmp(argv[1], "--file") == 0) {
+		freopen("data.in", "r", stdin);
+		read_from_file = true;
 	}
-#else
-	for (int i = 0; i < n; i++) {
-		mpz_class a(0);
-		string & item = items[i];
-		printf("num: %lu\n", item.length());
-		a.set_str(item.c_str(), 10);
-		cout << sqrt(a);
+	char **ar, tmp[SZ];
+	int t[SZ];
+	int maxNum = MAX_NUM;
+	//omp_set_nested(1);
+	/* set the content of ar array */
+	ar = new char *[SZ];
+	//ar = (char **) calloc(SZ, sizeof(char *));
+	for (int i = 1; i <= LNG + 1; i++)
+		ar[i] = new char[STRING_SIZE];
+	//ar[i] = (char *) calloc(STRING_SIZE, 1);
+	for (int i = 1, tmp; i <= LNG; i++) {
+		printf("\rcurrent i: %d", i);
+		if (read_from_file) {
+			scanf("%d", &tmp);
+		}
+		else {
+			tmp = rand() % maxNum + 1;
+			while (tmp < maxNum / 10 - 1)
+				tmp *= 10;
+		}
+		sprintf(ar[i], "%d", tmp);
 	}
-#endif
-#ifdef READ_FROM_FILE
-	cin.close();
-#endif
+	for (int i = 1; i <= LNG; i++)
+		t[i] = i;
+	printf("\nBefor sort:");
+	if (printing)
+		for (int i = 1; i <= LNG; i++)
+			printf("%s ", ar[t[i]]);
+
+	// first sort
+	utimeA(1, "");
+	shsort(LNG, ar, t, 0);
+	utimeA(1, "\nused time:");
+	printf("\nfirst sort, shell sort sequential:");
+	if (printing)
+		for (int i = 1; i <= LNG; i++)
+			printf("%s ", ar[t[i]]);
+
+	// second sort
+	for (int i = 1; i <= LNG; i++)
+		t[i] = i;
+	utimeA(1, "");
+	shsort(LNG, ar, t, 1);
+	utimeA(1, "\nused time:");
+	printf("\nsecond sort, shell sort parallel:");
+	if (printing)
+		for (int i = 1; i <= LNG; i++)
+			printf("%s ", ar[t[i]]);
+
+	// third sort
+	for (int i = 1; i <= LNG; i++) t[i] = i;
+	utimeA(1, "");
+	trsort(LNG, ar, t, 0);
+	utimeA(1, "\nused time:");
+	printf("\nthird sort, transposition sort parallel:");
+	if (printing)
+		for (int i = 1; i <= LNG; i++)
+			printf("%s ", ar[t[i]]);
+	//getchar();
+	for (int i = 1; i <= LNG + 1; i++)
+		delete [] ar[i];
+	delete [] ar;
 }
