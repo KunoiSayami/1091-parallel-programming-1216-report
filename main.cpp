@@ -7,71 +7,9 @@
 #include <cmath>
 #include <ctime>
 #include <cstring>
+#include <chrono>
 
-
-#ifdef VC2005
-/* save time, in milli second unit, into ltime */
-void times2(long *mtime)
-{
-	__time64_t ltime;
-	struct __timeb64 tstruct;
-	_time64(&ltime);
-	_ftime64_s(&tstruct);
-	*mtime = ltime * 1000 + tstruct.millitm;
-}
-#else
-
-/* save time, in milli second unit, into ltime */
-void times2(long *mtime) {
-	time(mtime);
-}
-
-#endif
-
-double utime() {
-	static long t1, t2;
-	static int first = 1;
-	if (first) {
-		times2(&t1);
-		first = 0;
-		return (0.0);
-	} else {
-		times2(&t2);
-		first = 1;  // reset this counter
-	}
-	return ((t2 - t1) / 1000.0);
-}
-
-
-#define UTIME_LNG 1000
-
-/* A function to return the used CPU time */
-double utimeA(int idx, const char *str) {
-	static long t1[UTIME_LNG], t2[UTIME_LNG];
-	static int first[UTIME_LNG];
-	static int initial = 1;
-	double tval;
-	int i;
-	if (initial) {
-		initial = 0;
-		for (i = 0; i < UTIME_LNG; i++) first[i] = 1;
-	}
-	if (idx >= UTIME_LNG) {
-		printf("\nWrong in giving index to utimeA().\n");
-		exit(-1);
-	}
-	if (first[idx]) {
-		times2(&t1[idx]);
-		first[idx] = 0;
-		return (0.0);
-	} else {
-		times2(&t2[idx]);
-		first[idx] = 1;  // reset this counter
-	}
-	tval = (t2[idx] - t1[idx]) / 1000.0;
-	printf("%s %g second.", str, tval);
-	return (tval);
-}
+using namespace std::chrono;
 
 /*  ............... Testing programs ................. */
 
@@ -176,7 +114,13 @@ void shsort(int n, char **key, int *t, int para) {
 }
 
 
+void showTimeSpan(const high_resolution_clock::time_point & start_time) {
+	duration<double> time_span = duration_cast<duration<double>>(high_resolution_clock::now() - start_time);
+	printf("used time: %lf seconds\n", time_span.count());
+}
+
 int main(int argc, char const * argv[]) {
+	using namespace std::chrono;
 	bool read_from_file = false;
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++)
@@ -215,39 +159,42 @@ int main(int argc, char const * argv[]) {
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	}
-
-	time_t start_time = time(nullptr);
+	high_resolution_clock::time_point start_time = high_resolution_clock::now();
 	// first sort
 	//utimeA(1, "");
 	shsort(LNG, ar, t, 0);
-	time_t stop_time = time(nullptr);
-	printf("used time: %ld seconds\n", stop_time - start_time);
+	showTimeSpan(start_time);
 	//utimeA(1, "\nused time:");
-	printf("\nfirst sort, shell sort sequential:");
-	if (printing)
+	printf("first sort, shell sort sequential:");
+	if (printing) {
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
-
+	}
+	puts("");
 	// second sort
 	for (int i = 1; i <= LNG; i++)
 		t[i] = i;
-	utimeA(1, "");
+	start_time = high_resolution_clock::now();
 	shsort(LNG, ar, t, 1);
-	utimeA(1, "\nused time:");
+	showTimeSpan(start_time);
 	printf("\nsecond sort, shell sort parallel:");
-	if (printing)
+	if (printing) {
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
-
+	}
+	puts("");
 	// third sort
 	for (int i = 1; i <= LNG; i++) t[i] = i;
+	start_time = high_resolution_clock::now();
 	trsort(LNG, ar, t, 1);
-	utimeA(1, "\nused time:");
+	showTimeSpan(start_time);
+	//utimeA(1, "\nused time:");
 	printf("\nthird sort, transposition sort parallel:");
 	if (printing)
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	//getchar();
+	puts("");
 	for (int i = 1; i <= LNG + 1; i++)
 		delete [] ar[i];
 	delete [] ar;
