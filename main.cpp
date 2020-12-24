@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/timeb.h>
 #include <cmath>
+#include <ctime>
 #include <cstring>
 
 
@@ -206,17 +207,22 @@ int main(int argc, char const * argv[]) {
 		}
 		sprintf(ar[i], "%d", tmp);
 	}
+	puts("");
 	for (int i = 1; i <= LNG; i++)
 		t[i] = i;
-	printf("\nBefor sort:");
-	if (printing)
+	if (printing) {
+		printf("Befor sort:");
 		for (int i = 1; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
+	}
 
+	time_t start_time = time(nullptr);
 	// first sort
-	utimeA(1, "");
+	//utimeA(1, "");
 	shsort(LNG, ar, t, 0);
-	utimeA(1, "\nused time:");
+	time_t stop_time = time(nullptr);
+	printf("used time: %ld seconds\n", stop_time - start_time);
+	//utimeA(1, "\nused time:");
 	printf("\nfirst sort, shell sort sequential:");
 	if (printing)
 		for (int i = 1; i <= LNG; i++)
@@ -235,8 +241,7 @@ int main(int argc, char const * argv[]) {
 
 	// third sort
 	for (int i = 1; i <= LNG; i++) t[i] = i;
-	utimeA(1, "");
-	trsort(LNG, ar, t, 0);
+	trsort(LNG, ar, t, 1);
 	utimeA(1, "\nused time:");
 	printf("\nthird sort, transposition sort parallel:");
 	if (printing)
