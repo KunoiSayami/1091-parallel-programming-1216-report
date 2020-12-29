@@ -73,8 +73,11 @@ int main()
 	cudaDeviceSynchronize();
 
 	for (int i = 0; i < width * height; i++) {
-		std::cout << (i % width == 0 ? "\n" : " ") << matrix_result->elements[i];
+		if (i > 0)
+			std::cout << (i % width == 0 ? "\n" : " ");
+		std::cout << matrix_result->elements[i];
 	}
+	std::cout << "\n";
 
 	return 0;
 }
