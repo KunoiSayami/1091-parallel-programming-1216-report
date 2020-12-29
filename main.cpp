@@ -1,20 +1,12 @@
 #include <cstdio>
 #include <cmath>
 #include <omp.h>
-#include <ctime>
-#include <sys/types.h>
-#include <sys/timeb.h>
-#include <cmath>
-#include <ctime>
 #include <cstring>
 #include <chrono>
 
 using namespace std::chrono;
 
-#define SORT_ORDER 0
-#define EQ ==
-constexpr size_t default_sz = 50000 + 10;
-//WARNING: "if define this length more than 840, process will stuck" (fixed)
+constexpr size_t default_sz = 500000 + 10;
 //constexpr size_t LNG = default_sz - 1;
 constexpr size_t STRING_SIZE = 20;
 constexpr int MAX_NUM = 10000;
@@ -49,7 +41,6 @@ void comp_exchange(char **key, int *t, int a, int b) {
 
 void trsort(int n, char **key, int *t, int para) {
 	int i, j;
-	int thN;
 	changed = 0;
 	for (i = 1; i <= n; i++) {
 		//printf("\niteration %d", i);
@@ -77,7 +68,6 @@ void trsort(int n, char **key, int *t, int para) {
 
 void shsort(int n, char **key, int *t, int para) {
 	int R, i, j, j2, pi, offset, pi2;
-	int thN;
 	int a, original_n;
 	// length consideration
 	for (a = 0; ; a++) if (pow(2.0, (double) a) >= n) break;
@@ -117,33 +107,28 @@ void showTimeSpan(const high_resolution_clock::time_point & start_time) {
 
 int main(int argc, char const * argv[]) {
 	using namespace std::chrono;
-	bool read_from_file = false;
 	size_t LNG = default_sz - 1;
 	if (argc > 1) {
-		sscanf(argv[1], "%d", &LNG);
+		LNG = strtol(argv[1], nullptr, 10);
+		// sscanf(argv[1], "%zd", &LNG);
 		if (LNG > default_sz) {
 			fprintf(stderr, "LNG > default_sz, Please check.\n");
 		}
 	}
-	char **ar, tmp[default_sz];
+	char **ar;//, tmp[default_sz];
 	int t[default_sz];
 	int maxNum = MAX_NUM;
 	ar = new char *[default_sz];
-	for (int i = 1; i <= LNG + 1; i++)
+	for (auto i = 1ul; i <= LNG + 1; i++)
 		ar[i] = new char[STRING_SIZE];
-	for (int i = 1, tmp; i <= LNG; i++) {
+	for (auto i = 1ul; i <= LNG; i++) {
 #ifdef TESTING
 		printf("\rcurrent i: %d", i);
 #endif
-		if (read_from_file) {
-			scanf("%d", &tmp);
-		}
-		else {
-			tmp = rand() % maxNum + 1;
-			while (tmp < maxNum / 10 - 1)
-				tmp *= 10;
-		}
-		sprintf(ar[i], "%d", tmp);
+		auto tmp_ = rand() % maxNum + 1;
+		while (tmp_ < maxNum / 10 - 1)
+			tmp_ *= 10;
+		sprintf(ar[i], "%d", tmp_);
 	}
 #ifdef TESTING
 	puts("");
@@ -151,12 +136,12 @@ int main(int argc, char const * argv[]) {
 	printf("%ld ", LNG);
 #endif
 
-	for (int i = 1; i <= LNG; i++)
+	for (auto i = 1ul; i <= LNG; i++)
 		t[i] = i;
 #ifdef TESTING
 	if (printing) {
 		printf("Befor sort:");
-		for (int i = 1; i <= LNG; i++)
+		for (auto i = 1ul; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	}
 #endif
@@ -167,14 +152,14 @@ int main(int argc, char const * argv[]) {
 #ifdef TESTING
 	printf("First sort, shell sort sequential:");
 	if (printing) {
-		for (int i = 1; i <= LNG; i++)
+		for (auto i = 1ul; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	}
 	puts("");
 #endif
 
 	// second sort
-	for (int i = 1; i <= LNG; i++)
+	for (auto i = 1ul; i <= LNG; i++)
 		t[i] = i;
 	start_time = high_resolution_clock::now();
 	shsort(LNG, ar, t, 1);
@@ -182,40 +167,40 @@ int main(int argc, char const * argv[]) {
 #ifdef TESTING
 	printf("Second sort, shell sort parallel:");
 	if (printing) {
-		for (int i = 1; i <= LNG; i++)
+		for (auto i = 1ul; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	}
 	puts("");
 #endif
 
 	// third sort
-	for (int i = 1; i <= LNG; i++) t[i] = i;
+	for (auto i = 1ul; i <= LNG; i++) t[i] = i;
 	start_time = high_resolution_clock::now();
 	trsort(LNG, ar, t, 0);
 	showTimeSpan(start_time);
 #ifdef TESTING
 	printf("Third sort, transposition sort sequential:");
 	if (printing) {
-		for (int i = 1; i <= LNG; i++)
+		for (auto i = 1ul; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	}
 	puts("");
 #endif
 
 	// fourth sort
-	for (int i = 1; i <= LNG; i++) t[i] = i;
+	for (auto i = 1ul; i <= LNG; i++) t[i] = i;
 	start_time = high_resolution_clock::now();
 	trsort(LNG, ar, t, 1);
 	showTimeSpan(start_time);
 #ifdef TESTING
 	printf("Fourth sort, transposition sort parallel:");
 	if (printing)
-		for (int i = 1; i <= LNG; i++)
+		for (auto i = 1ul; i <= LNG; i++)
 			printf("%s ", ar[t[i]]);
 	//getchar();
 #endif
 	puts("");
-	for (int i = 1; i <= LNG + 1; i++)
+	for (auto i = 1ul; i <= LNG + 1; i++)
 		delete [] ar[i];
 	delete [] ar;
 }

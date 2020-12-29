@@ -5,5 +5,7 @@ project(1091_parallel_programming_1216_report)
 set(CMAKE_CXX_STANDARD 14)
 find_package(OpenMP REQUIRED)
 
+add_compile_options(-Wall -Wextra)
+
 add_executable(1091_parallel_programming_1216_report main.cpp)
 target_link_libraries(1091_parallel_programming_1216_report OpenMP::OpenMP_CXX)
