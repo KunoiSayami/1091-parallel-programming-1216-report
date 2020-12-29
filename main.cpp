@@ -12,6 +12,8 @@ constexpr size_t STRING_SIZE = 20;
 constexpr int MAX_NUM = 10000;
 int printing = 0;
 
+//#define DISABLE_NOT_PARALLEL
+
 int changed = 0;    // the global variable
 int use_changed = 1;  // flag to decide whether go recording whether has exchanged
 void comp_exchange2(char **key, int *t, int a, int b, int len) {
@@ -147,6 +149,7 @@ int main(int argc, char const * argv[]) {
 #endif
 	high_resolution_clock::time_point start_time = high_resolution_clock::now();
 
+#ifndef DISABLE_NOT_PARALLEL
 	shsort(LNG, ar, t, 0);
 	showTimeSpan(start_time);
 #ifdef TESTING
@@ -157,6 +160,7 @@ int main(int argc, char const * argv[]) {
 	}
 	puts("");
 #endif
+#endif // DISABLE_NOT_PARALLEL
 
 	// second sort
 	for (auto i = 1ul; i <= LNG; i++)
@@ -173,6 +177,7 @@ int main(int argc, char const * argv[]) {
 	puts("");
 #endif
 
+#ifndef DISABLE_NOT_PARALLEL
 	// third sort
 	for (auto i = 1ul; i <= LNG; i++) t[i] = i;
 	start_time = high_resolution_clock::now();
@@ -185,7 +190,8 @@ int main(int argc, char const * argv[]) {
 			printf("%s ", ar[t[i]]);
 	}
 	puts("");
-#endif
+#endif // TESTING
+#endif // DISABLE_NOT_PARALLEL
 
 	// fourth sort
 	for (auto i = 1ul; i <= LNG; i++) t[i] = i;
