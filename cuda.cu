@@ -1,4 +1,7 @@
 #include <iostream>
+#include <chrono>
+
+using namespace std::chrono;
 
 typedef int data_type;
 
@@ -27,8 +30,7 @@ __global__ void matMulKernel(Matrix *a, Matrix *b, Matrix *c)
 	data_type value = 0;
 	int row = threadIdx.y + blockIdx.y * blockDim.y;
 	int col = threadIdx.x + blockIdx.x * blockDim.x;
-	for (int i = 0; i < a->width; i++)
-	{
+	for (int i = 0; i <= a->width; i++)	{
 		value += getElement(a, row, i) * getElement(b, i, col);
 	}
 	setElement(c, row, col, value);
@@ -68,7 +70,11 @@ int main()
 	dim3 blockSize(32, 32);
 	dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
 				  (height + blockSize.y - 1) / blockSize.y);
+
+	high_resolution_clock::time_point start_time = high_resolution_clock::now();
 	matMulKernel<<<gridSize, blockSize>>>(matrix_a, matrix_b, matrix_result);
+
+	std::cerr << "Time spend: " << duration_cast<duration<double>>(high_resolution_clock::now() - start_time).count() << "\n";
 
 	cudaDeviceSynchronize();
 

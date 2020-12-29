@@ -58,18 +58,18 @@ def main(really: bool) -> None:
     file = None
     if really:
         file = open('data.in', 'w')
-    n = random.randint(32, 64)
-    print(sys.argv[1], n, file=sys.stderr)
+    n = random.randint(32, 128)
+    print(n, file=sys.stderr)
     print(n, n, file=file)
     generate_data(n, file)
     generate_data(n, file)
     if really:
         file.close()
         with open('data.in') as data_in, open('result.out', 'w') as data_out:
-            p = subprocess.Popen([sys.argv[1]], stdin=data_in, stdout=data_out)
+            p = subprocess.Popen([sys.argv[1]], stdin=data_in, stdout=data_out, stderr=sys.stdout)
             calc(n)
             p.wait()
-            print(filecmp.cmp('really.out', 'result.out'))
+        print(filecmp.cmp('really.out', 'result.out'))
 
 
 if __name__ == '__main__':
