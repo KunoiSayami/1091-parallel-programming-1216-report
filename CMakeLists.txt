@@ -12,6 +12,9 @@ endif()
 add_executable(1091_parallel_programming_1216_report main.cpp)
 target_link_libraries(1091_parallel_programming_1216_report OpenMP::OpenMP_CXX)
 
+add_executable(ompmatrix ompmatrix.cpp)
+target_link_libraries(ompmatrix OpenMP::OpenMP_CXX)
+
 find_package(CUDA)
 if(CUDA_FOUND)
     project(cuda_test CUDA)
