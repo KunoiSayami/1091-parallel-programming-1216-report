@@ -3,7 +3,7 @@
 
 using namespace std::chrono;
 
-typedef int data_type;
+typedef float data_type;
 
 struct Matrix {
 	int width;
@@ -30,7 +30,7 @@ __global__ void matMulKernel(Matrix *a, Matrix *b, Matrix *c)
 	data_type value = 0;
 	int row = threadIdx.y + blockIdx.y * blockDim.y;
 	int col = threadIdx.x + blockIdx.x * blockDim.x;
-	for (int i = 0; i <= a->width; i++)	{
+	for (int i = 0; i <= a->width; i++) {
 		value += getElement(a, row, i) * getElement(b, i, col);
 	}
 	setElement(c, row, col, value);
@@ -40,6 +40,10 @@ inline void printMatrix(Matrix * matrix) {
 	for (int i = 0; i < matrix->width * matrix->height; i++) {
 		std::cout << (i % matrix->width == 0 ? "\n" : " ") << matrix->elements[i];
 	}
+}
+
+int gcd(int a, int b) {
+	return b == 0? a : gcd(b, a%b);
 }
 
 int main()
@@ -52,7 +56,7 @@ int main()
 	cudaMallocManaged((void**)&matrix_a, sizeof(Matrix));
 	cudaMallocManaged((void**)&matrix_b, sizeof(Matrix));
 	cudaMallocManaged((void**)&matrix_result, sizeof(Matrix));
-	size_t nBytes = width * height * sizeof(int);
+	size_t nBytes = width * height * sizeof(data_type);
 	cudaMallocManaged((void**)&matrix_a->elements, nBytes);
 	cudaMallocManaged((void**)&matrix_b->elements, nBytes);
 	cudaMallocManaged((void**)&matrix_result->elements, nBytes);
@@ -67,7 +71,7 @@ int main()
 	for (int i = 0; i < width * height; i++)
 		std::cin >> matrix_b->elements[i];
 
-	dim3 blockSize(32, 32);
+	dim3 blockSize(gcd(width, 32), gcd(width, 32));
 	dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
 				  (height + blockSize.y - 1) / blockSize.y);
 
@@ -81,9 +85,12 @@ int main()
 	for (int i = 0; i < width * height; i++) {
 		if (i > 0)
 			std::cout << (i % width == 0 ? "\n" : " ");
-		std::cout << matrix_result->elements[i];
+		std::cout << (int)matrix_result->elements[i];
 	}
 	std::cout << "\n";
 
+	cudaFree(matrix_a);
+	cudaFree(matrix_b);
+	cudaFree(matrix_result);
 	return 0;
 }

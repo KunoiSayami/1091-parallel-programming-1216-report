@@ -58,7 +58,8 @@ def main(really: bool) -> None:
     file = None
     if really:
         file = open('data.in', 'w')
-    n = random.randint(32, 128)
+    #n = random.choice([2**x for x in range(5, 10)])
+    n = random.randint(32, 8192)
     print(n, file=sys.stderr)
     print(n, n, file=file)
     generate_data(n, file)
